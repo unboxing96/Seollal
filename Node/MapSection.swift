@@ -25,12 +25,12 @@ class MapSection: SKNode {
     
     private func createObstaclesAndItems() {
         // Add clouds to the map section
-        let numberOfClouds = 20 // You can adjust this value as needed
-        for _ in 9..<numberOfClouds {
-            let cloud = Cloud()
-            cloud.position = CGPoint(x: CGFloat.random(in: 0...width), y: CGFloat.random(in: 0...height))
-            addChild(cloud)
-        }
+//        let numberOfClouds = 20 // You can adjust this value as needed
+//        for _ in 9..<numberOfClouds {
+//            let cloud = Cloud()
+//            cloud.position = CGPoint(x: CGFloat.random(in: 0...width), y: CGFloat.random(in: 0...height))
+//            addChild(cloud)
+//        }
         
         // Customize this function to generate obstacles and items for the map section
     }

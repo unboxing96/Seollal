@@ -33,7 +33,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         setupPlayer()
         setupObstaclesAndItems()
         setupCamera()
+        setupCameraConstraints()
         setupJoystick()
+        setupMapEdge()
         physicsWorld.contactDelegate = self
         physicsWorld.gravity = CGVector(dx: 0, dy: -1) // Weaker gravity
     }
@@ -86,14 +88,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         cameraNode.addChild(joystick) // Add the joystick to the cameraNode
     }
-
-
-
-
     
     private func setupObstaclesAndItems() {
         let numberOfClouds = 50 // Adjust this value as needed
         let numberOfObstacles = 40 // Adjust this value as needed
+        let numberOfItems = 4 // Adjust this value as needed
 
         for _ in 0..<numberOfClouds {
             let cloud = Cloud()
@@ -105,6 +104,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             let obstacle = Obstacle()
             obstacle.position = CGPoint(x: CGFloat.random(in: -size.width * 4...size.width * 4), y: CGFloat.random(in: -size.height * 4...size.height * 4))
             worldNode.addChild(obstacle)
+        }
+        
+        for _ in 0..<numberOfItems {
+            let item = Item()
+            item.position = CGPoint(x: CGFloat.random(in: -size.width * 4...size.width * 4), y: CGFloat.random(in: -size.height * 4...size.height * 4))
+            worldNode.addChild(item)
         }
     }
     
@@ -126,6 +131,16 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         player.constraints = [constraint]
     }
 
+    private func setupMapEdge() {
+        let edgeRect = CGRect(x: -size.width * 4, y: -size.height * 4, width: size.width * 8, height: size.height * 8)
+        let edgeNode = SKNode()
+        edgeNode.physicsBody = SKPhysicsBody(edgeLoopFrom: edgeRect)
+        edgeNode.physicsBody?.categoryBitMask = PhysicsCategory.mapEdge
+        edgeNode.physicsBody?.contactTestBitMask = PhysicsCategory.player
+        edgeNode.physicsBody?.collisionBitMask = PhysicsCategory.player
+        worldNode.addChild(edgeNode)
+    }
+
 
     
     override func update(_ currentTime: TimeInterval) {
@@ -141,14 +156,28 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         // Apply a stronger force to the player's physics body based on joystick input
         player.physicsBody?.applyForce(CGVector(dx: dx, dy: dy)) // Decreased impulse power
 
+        
         // Ensure the player doesn't move beyond the map boundaries
-        player.position.x = min(max(player.position.x, -size.width * 4), size.width * 4)
-        player.position.y = min(max(player.position.y, -size.height * 4), size.height * 4)
+        let xMin = -size.width * 4 + player.size.width / 2
+        let xMax = size.width * 4 - player.size.width / 2
+        let yMin = -size.height * 4 + player.size.height / 2
+        let yMax = size.height * 4 - player.size.height / 2
+
+        player.position.x = min(max(player.position.x, xMin), xMax)
+        player.position.y = min(max(player.position.y, yMin), yMax)
+
+//        // Ensure the player doesn't move beyond the map boundaries
+//        player.position.x = min(max(player.position.x, -size.width * 4), size.width * 4)
+//        player.position.y = min(max(player.position.y, -size.height * 4), size.height * 4)
         
     }
 
-
-
+    private func setupCameraConstraints() {
+        let xRange = SKRange(lowerLimit: size.width / 2, upperLimit: size.width * 4 - size.width / 2)
+        let yRange = SKRange(lowerLimit: size.height / 2, upperLimit: size.height * 4 - size.height / 2)
+        let constraint = SKConstraint.positionX(xRange, y: yRange)
+        cameraNode.constraints = [constraint]
+    }
 
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -163,4 +192,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         joystick.joystickTouchesEnded(touches, with: event)
     }
     
+}
+
+
+struct PhysicsCategory {
+    static let player: UInt32 = 0x1 << 0
+    static let obstacle: UInt32 = 0x1 << 1
+    static let item: UInt32 = 0x1 << 2
+    static let mapEdge: UInt32 = 0x1 << 3
 }

@@ -13,6 +13,9 @@ class Player: SKSpriteNode {
         let texture = SKTexture(imageNamed: "player")
         super.init(texture: texture, color: .clear, size: texture.size())
         setupPhysicsBody()
+        physicsBody?.categoryBitMask = PhysicsCategory.player
+        physicsBody?.contactTestBitMask = PhysicsCategory.obstacle | PhysicsCategory.mapEdge
+        physicsBody?.collisionBitMask = PhysicsCategory.obstacle | PhysicsCategory.mapEdge
     }
     
     required init?(coder aDecoder: NSCoder) {
