@@ -10,7 +10,7 @@ import SpriteKit
 
 class Player: SKSpriteNode {
     init() {
-        let texture = SKTexture(imageNamed: "ball") // Change the image to a ball image
+        let texture = SKTexture(imageNamed: "player")
         super.init(texture: texture, color: .clear, size: texture.size())
         setupPhysicsBody()
     }
@@ -21,10 +21,10 @@ class Player: SKSpriteNode {
     
     private func setupPhysicsBody() {
         physicsBody = SKPhysicsBody(circleOfRadius: size.width / 2)
-        physicsBody?.isDynamic = true
-        physicsBody?.allowsRotation = true
+        physicsBody?.affectedByGravity = true
+        physicsBody?.allowsRotation = false
         physicsBody?.categoryBitMask = 1
+        physicsBody?.contactTestBitMask = 2
         physicsBody?.collisionBitMask = 2
-        physicsBody?.contactTestBitMask = 2 | 4
     }
 }

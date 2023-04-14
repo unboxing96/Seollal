@@ -14,6 +14,7 @@ import SpriteKit
 class Joystick: SKNode {
     var velocity = CGPoint.zero
     private var controlNode: SKShapeNode!
+    let radius: CGFloat = 50 // Adjust this value as needed
 
     override init() {
         super.init()

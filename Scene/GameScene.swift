@@ -21,7 +21,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var worldNode: SKNode!
     
     // camera
-    private var cameraNode: SKCameraNode!
+    private var cameraNode: SKCameraNode = SKCameraNode()
 
     // speed
     private let playerSpeed: CGFloat = 200 // Adjust this value to control the player's speed
@@ -35,7 +35,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         setupCamera()
         setupJoystick()
         physicsWorld.contactDelegate = self
+        physicsWorld.gravity = CGVector(dx: 0, dy: -1) // Weaker gravity
     }
+
 
 
     
@@ -71,13 +73,22 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         player = Player()
         player.position = CGPoint(x: size.width / 2, y: size.height / 2)
         worldNode.addChild(player)
+        setupPlayerConstraints()
     }
+
     
     private func setupJoystick() {
         joystick = Joystick()
-        joystick.position = CGPoint(x: -size.width / 2 + 100, y: -size.height / 2 + 100)
+        
+        let joystickPadding: CGFloat = 50
+        let joystickPosition = CGPoint(x: -size.width / 2 + joystickPadding + joystick.radius, y: -size.height / 2 + joystickPadding + joystick.radius)
+        joystick.position = joystickPosition
+        
         cameraNode.addChild(joystick) // Add the joystick to the cameraNode
     }
+
+
+
 
     
     private func setupObstaclesAndItems() {
@@ -107,6 +118,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         worldNode = SKNode()
         addChild(worldNode)
     }
+    
+    private func setupPlayerConstraints() {
+        let xRange = SKRange(lowerLimit: -size.width * 4 + player.size.width / 2, upperLimit: size.width * 4 - player.size.width / 2)
+        let yRange = SKRange(lowerLimit: -size.height * 4 + player.size.height / 2, upperLimit: size.height * 4 - player.size.height / 2)
+        let constraint = SKConstraint.positionX(xRange, y: yRange)
+        player.constraints = [constraint]
+    }
+
 
     
     override func update(_ currentTime: TimeInterval) {
@@ -119,12 +138,16 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let dx = joystick.velocity.x * playerSpeed * CGFloat(dt)
         let dy = joystick.velocity.y * playerSpeed * CGFloat(dt)
 
-        player.physicsBody?.applyForce(CGVector(dx: dx, dy: dy))
+        // Apply a stronger force to the player's physics body based on joystick input
+        player.physicsBody?.applyForce(CGVector(dx: dx, dy: dy)) // Decreased impulse power
 
         // Ensure the player doesn't move beyond the map boundaries
         player.position.x = min(max(player.position.x, -size.width * 4), size.width * 4)
         player.position.y = min(max(player.position.y, -size.height * 4), size.height * 4)
+        
     }
+
+
 
 
     
