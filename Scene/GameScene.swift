@@ -20,18 +20,24 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var mapSections: [MapSection] = []
     private var worldNode: SKNode!
     
+    // camera
+    private var cameraNode: SKCameraNode!
+
+    // speed
+    private let playerSpeed: CGFloat = 200 // Adjust this value to control the player's speed
+
+
+    
     override func didMove(to view: SKView) {
         setupWorldNode()
         setupPlayer()
-        setupJoystick()
         setupObstaclesAndItems()
+        setupCamera()
+        setupJoystick()
         physicsWorld.contactDelegate = self
     }
-    
-    private func setupWorldNode() {
-        worldNode = SKNode()
-        addChild(worldNode)
-    }
+
+
     
     func didBegin(_ contact: SKPhysicsContact) {
         let nodeA = contact.bodyA.node
@@ -41,15 +47,25 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             handleCollision(player: playerNode, obstacle: obstacleNode)
         } else if let playerNode = nodeB as? Player, let obstacleNode = nodeA as? Obstacle {
             handleCollision(player: playerNode, obstacle: obstacleNode)
+        } else if let playerNode = nodeA as? Player, let itemNode = nodeB as? Item {
+            handleItemCollision(player: playerNode, item: itemNode)
+        } else if let playerNode = nodeB as? Player, let itemNode = nodeA as? Item {
+            handleItemCollision(player: playerNode, item: itemNode)
         }
     }
+
     
     private func handleCollision(player: SKSpriteNode, obstacle: Obstacle) {
-        // Handle the collision between the player and the obstacle.
-        // For example, you can stop the game, play a sound effect, or display a game over message.
-        print("Player collided with an obstacle")
+        // Player bounces off the obstacle
+        let bounceVector = CGVector(dx: (player.position.x - obstacle.position.x), dy: (player.position.y - obstacle.position.y))
+        player.physicsBody?.applyImpulse(bounceVector)
     }
-
+    
+    private func handleItemCollision(player: SKSpriteNode, item: Item) {
+        // Float a modal when the player touches an item
+        item.removeFromParent() // Remove the item from the game world
+        // Implement the logic for floating a modal, e.g., show a message, update the score, or play a sound effect
+    }
     
     private func setupPlayer() {
         player = Player()
@@ -59,13 +75,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     private func setupJoystick() {
         joystick = Joystick()
-        joystick.position = CGPoint(x: 100, y: 100)
-        addChild(joystick)
+        joystick.position = CGPoint(x: -size.width / 2 + 100, y: -size.height / 2 + 100)
+        cameraNode.addChild(joystick) // Add the joystick to the cameraNode
     }
+
     
     private func setupObstaclesAndItems() {
         let numberOfClouds = 50 // Adjust this value as needed
-        let numberOfObstacles = 20 // Adjust this value as needed
+        let numberOfObstacles = 40 // Adjust this value as needed
 
         for _ in 0..<numberOfClouds {
             let cloud = Cloud()
@@ -80,20 +97,36 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
     
+    private func setupCamera() {
+        cameraNode = SKCameraNode()
+        camera = cameraNode
+        addChild(cameraNode)
+    }
+    
+    private func setupWorldNode() {
+        worldNode = SKNode()
+        addChild(worldNode)
+    }
+
+    
     override func update(_ currentTime: TimeInterval) {
+        // camera
+        cameraNode.position = player.position
+        
         let dt = currentTime - lastUpdateTime
         lastUpdateTime = currentTime
 
-        let dx = joystick.velocity.x * CGFloat(dt)
-        let dy = joystick.velocity.y * CGFloat(dt)
+        let dx = joystick.velocity.x * playerSpeed * CGFloat(dt)
+        let dy = joystick.velocity.y * playerSpeed * CGFloat(dt)
 
-        worldNode.position.x -= dx
-        worldNode.position.y -= dy
+        player.physicsBody?.applyForce(CGVector(dx: dx, dy: dy))
 
-        // Ensure the worldNode doesn't move beyond the map boundaries
-        worldNode.position.x = min(max(worldNode.position.x, -size.width * 4), size.width * 4)
-        worldNode.position.y = min(max(worldNode.position.y, -size.height * 4), size.height * 4)
+        // Ensure the player doesn't move beyond the map boundaries
+        player.position.x = min(max(player.position.x, -size.width * 4), size.width * 4)
+        player.position.y = min(max(player.position.y, -size.height * 4), size.height * 4)
     }
+
+
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         joystick.joystickTouchesBegan(touches, with: event)
