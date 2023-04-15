@@ -1,27 +1,14 @@
-//
-//  Item.swift
-//  SeollalGame
-//
-//  Created by kimpepe on 2023/04/12.
-//
-
-import Foundation
 import SpriteKit
-import SwiftUI
 
 class Item: SKSpriteNode {
-    init() {
-        let texture = SKTexture(imageNamed: "item") // Change the image to an item image
-        super.init(texture: texture, color: .clear, size: texture.size())
-        setupPhysicsBody()
+    var image: UIImage {
+        return self.texture!.uiImage()
     }
     
-    private func setupPhysicsBody() {
-        physicsBody = SKPhysicsBody(circleOfRadius: size.width / 2)
-        physicsBody?.isDynamic = false
-        physicsBody?.categoryBitMask = 8
-        physicsBody?.collisionBitMask = 0
-        physicsBody?.contactTestBitMask = 1
+    init(imageNamed: String) {
+        let texture = SKTexture(imageNamed: imageNamed)
+        let itemSize = CGSize(width: 50, height: 50) // Set the size for all items here
+        super.init(texture: texture, color: .clear, size: itemSize)
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -29,4 +16,60 @@ class Item: SKSpriteNode {
     }
 }
 
+class Item1: Item {
+    init() {
+        super.init(imageNamed: "item1_image")
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
 
+class Item2: Item {
+    init() {
+        super.init(imageNamed: "item2_image")
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
+class Item3: Item {
+    init() {
+        super.init(imageNamed: "item3_image")
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
+class Item4: Item {
+    init() {
+        super.init(imageNamed: "item4_image")
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
+extension SKTexture {
+    func uiImage() -> UIImage {
+        let view = SKView(frame: CGRect(origin: .zero, size: self.size()))
+        let size = self.size()
+        let scene = SKScene(size: size)
+        let spriteNode = SKSpriteNode(texture: self)
+        spriteNode.position = CGPoint(x: size.width / 2, y: size.height / 2)
+        scene.addChild(spriteNode)
+        view.presentScene(scene)
+        
+        UIGraphicsBeginImageContextWithOptions(size, false, 0)
+        view.drawHierarchy(in: view.bounds, afterScreenUpdates: true)
+        let image = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        return image!
+    }
+}

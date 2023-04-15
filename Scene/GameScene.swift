@@ -47,7 +47,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let nodeA = contact.bodyA.node
         let nodeB = contact.bodyB.node
 
-        if let playerNode = nodeA as? Player, let obstacleNode = nodeB as? Obstacle {
+        // Add this condition to handle collisions between the player and the map edge
+        if let playerNode = nodeA as? Player, nodeB?.physicsBody?.categoryBitMask == PhysicsCategory.mapEdge {
+            handleMapEdgeCollision(player: playerNode)
+        } else if let playerNode = nodeB as? Player, nodeA?.physicsBody?.categoryBitMask == PhysicsCategory.mapEdge {
+            handleMapEdgeCollision(player: playerNode)
+        } else if let playerNode = nodeA as? Player, let obstacleNode = nodeB as? Obstacle {
             handleCollision(player: playerNode, obstacle: obstacleNode)
         } else if let playerNode = nodeB as? Player, let obstacleNode = nodeA as? Obstacle {
             handleCollision(player: playerNode, obstacle: obstacleNode)
@@ -58,24 +63,34 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
 
+
     
     private func handleCollision(player: SKSpriteNode, obstacle: Obstacle) {
-        // Player bounces off the obstacle
-        let bounceVector = CGVector(dx: (player.position.x - obstacle.position.x), dy: (player.position.y - obstacle.position.y))
+        let bounceVector = CGVector(dx: (player.position.x - obstacle.position.x) * 0.1, dy: (player.position.y - obstacle.position.y) * 0.1)
         player.physicsBody?.applyImpulse(bounceVector)
     }
     
     private func handleItemCollision(player: SKSpriteNode, item: Item) {
-        // Float a modal when the player touches an item
-        item.removeFromParent() // Remove the item from the game world
-        // Implement the logic for floating a modal, e.g., show a message, update the score, or play a sound effect
+        item.removeFromParent()
+        presentItemModal(for: item)
+    }
+    
+    private func handleMapEdgeCollision(player: Player) {
+        let bounceVector = CGVector(dx: -(player.physicsBody?.velocity.dx ?? 0) * 0.2, dy: -(player.physicsBody?.velocity.dy ?? 0) * 0.2)
+        player.physicsBody?.applyImpulse(bounceVector)
+    }
+
+
+    
+    private func showModal(for itemName: String) {
+        // Implement the code to display a modal with information about the itemName
+        // This will depend on your UI implementation
     }
     
     private func setupPlayer() {
         player = Player()
         player.position = CGPoint(x: size.width / 2, y: size.height / 2)
         worldNode.addChild(player)
-        setupPlayerConstraints()
     }
 
     
@@ -94,6 +109,17 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let numberOfObstacles = 40 // Adjust this value as needed
         let numberOfItems = 4 // Adjust this value as needed
 
+        // Add this code to create the items and place them outside of obstacles
+        let items: [Item] = [Item1(), Item2(), Item3(), Item4()]
+        for item in items {
+            var position: CGPoint
+            repeat {
+                position = CGPoint(x: CGFloat.random(in: -size.width * 4...size.width * 4), y: CGFloat.random(in: -size.height * 4...size.height * 4))
+                item.position = position
+            } while !isPositionOutsideObstacles(position: position)
+            worldNode.addChild(item)
+        }
+
         for _ in 0..<numberOfClouds {
             let cloud = Cloud()
             cloud.position = CGPoint(x: CGFloat.random(in: -size.width * 4...size.width * 4), y: CGFloat.random(in: -size.height * 4...size.height * 4))
@@ -105,13 +131,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             obstacle.position = CGPoint(x: CGFloat.random(in: -size.width * 4...size.width * 4), y: CGFloat.random(in: -size.height * 4...size.height * 4))
             worldNode.addChild(obstacle)
         }
-        
-        for _ in 0..<numberOfItems {
-            let item = Item()
-            item.position = CGPoint(x: CGFloat.random(in: -size.width * 4...size.width * 4), y: CGFloat.random(in: -size.height * 4...size.height * 4))
-            worldNode.addChild(item)
-        }
     }
+
     
     private func setupCamera() {
         cameraNode = SKCameraNode()
@@ -124,23 +145,44 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(worldNode)
     }
     
-    private func setupPlayerConstraints() {
-        let xRange = SKRange(lowerLimit: -size.width * 4 + player.size.width / 2, upperLimit: size.width * 4 - player.size.width / 2)
-        let yRange = SKRange(lowerLimit: -size.height * 4 + player.size.height / 2, upperLimit: size.height * 4 - player.size.height / 2)
-        let constraint = SKConstraint.positionX(xRange, y: yRange)
-        player.constraints = [constraint]
-    }
 
     private func setupMapEdge() {
-        let edgeRect = CGRect(x: -size.width * 4, y: -size.height * 4, width: size.width * 8, height: size.height * 8)
-        let edgeNode = SKNode()
-        edgeNode.physicsBody = SKPhysicsBody(edgeLoopFrom: edgeRect)
-        edgeNode.physicsBody?.categoryBitMask = PhysicsCategory.mapEdge
-        edgeNode.physicsBody?.contactTestBitMask = PhysicsCategory.player
-        edgeNode.physicsBody?.collisionBitMask = PhysicsCategory.player
-        worldNode.addChild(edgeNode)
+        let leftEdge = SKNode()
+        leftEdge.physicsBody = SKPhysicsBody(edgeFrom: CGPoint(x: -size.width * 4, y: -size.height * 4), to: CGPoint(x: -size.width * 4, y: size.height * 4))
+        leftEdge.physicsBody?.categoryBitMask = PhysicsCategory.mapEdge
+        leftEdge.physicsBody?.collisionBitMask = PhysicsCategory.player
+        worldNode.addChild(leftEdge)
+
+        let topEdge = SKNode()
+        topEdge.physicsBody = SKPhysicsBody(edgeFrom: CGPoint(x: -size.width * 4, y: size.height * 4), to: CGPoint(x: size.width * 4, y: size.height * 4))
+        topEdge.physicsBody?.categoryBitMask = PhysicsCategory.mapEdge
+        topEdge.physicsBody?.collisionBitMask = PhysicsCategory.player
+        worldNode.addChild(topEdge)
+
+        // Add these lines to create edge physics bodies for the right and bottom sides of the map
+        let rightEdge = SKNode()
+        rightEdge.physicsBody = SKPhysicsBody(edgeFrom: CGPoint(x: size.width * 4, y: -size.height * 4), to: CGPoint(x: size.width * 4, y: size.height * 4))
+        rightEdge.physicsBody?.categoryBitMask = PhysicsCategory.mapEdge
+        rightEdge.physicsBody?.collisionBitMask = PhysicsCategory.player
+        worldNode.addChild(rightEdge)
+
+        let bottomEdge = SKNode()
+        bottomEdge.physicsBody = SKPhysicsBody(edgeFrom: CGPoint(x: -size.width * 4, y: -size.height * 4), to: CGPoint(x: size.width * 4, y: -size.height * 4))
+        bottomEdge.physicsBody?.categoryBitMask = PhysicsCategory.mapEdge
+        bottomEdge.physicsBody?.collisionBitMask = PhysicsCategory.player
+        worldNode.addChild(bottomEdge)
     }
 
+
+
+    private func isPositionOutsideObstacles(position: CGPoint) -> Bool {
+        for obstacle in obstacles {
+            if obstacle.contains(position) {
+                return false
+            }
+        }
+        return true
+    }
 
     
     override func update(_ currentTime: TimeInterval) {
@@ -153,9 +195,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let dx = joystick.velocity.x * playerSpeed * CGFloat(dt)
         let dy = joystick.velocity.y * playerSpeed * CGFloat(dt)
 
-        // Apply a stronger force to the player's physics body based on joystick input
-        player.physicsBody?.applyForce(CGVector(dx: dx, dy: dy)) // Decreased impulse power
 
+        // Apply a stronger force to the player's physics body based on joystick input
+        player.physicsBody?.applyForce(CGVector(dx: dx * 2.0, dy: dy * 2.0))
         
         // Ensure the player doesn't move beyond the map boundaries
         let xMin = -size.width * 4 + player.size.width / 2
@@ -173,11 +215,33 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     private func setupCameraConstraints() {
-        let xRange = SKRange(lowerLimit: size.width / 2, upperLimit: size.width * 4 - size.width / 2)
-        let yRange = SKRange(lowerLimit: size.height / 2, upperLimit: size.height * 4 - size.height / 2)
+        let xRange = SKRange(lowerLimit: -size.width * 4 + size.width / 2, upperLimit: size.width * 4 - size.width / 2)
+        let yRange = SKRange(lowerLimit: -size.height * 4 + size.height / 2, upperLimit: size.height * 4 - size.height / 2)
         let constraint = SKConstraint.positionX(xRange, y: yRange)
         cameraNode.constraints = [constraint]
     }
+
+    
+    private func presentItemModal(for item: Item) {
+        guard let view = self.view else { return }
+        
+        let hostingController = UIHostingController(rootView: AnyView(EmptyView()))
+        
+        hostingController.rootView = AnyView(ItemModalView(item: item, onDismiss: {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                view.isPaused = false
+            }
+            hostingController.dismiss(animated: true)
+        }))
+
+        hostingController.modalPresentationStyle = .overFullScreen
+        hostingController.modalTransitionStyle = .crossDissolve
+        
+        view.isPaused = true
+        view.window?.rootViewController?.present(hostingController, animated: true)
+    }
+
+
 
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -194,10 +258,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
 }
 
-
 struct PhysicsCategory {
     static let player: UInt32 = 0x1 << 0
     static let obstacle: UInt32 = 0x1 << 1
     static let item: UInt32 = 0x1 << 2
-    static let mapEdge: UInt32 = 0x1 << 3
+    static let edge: UInt32 = 0x1 << 3
+    static let mapEdge: UInt32 = 0x1 << 4 // Add this line for a separate category for map edges
 }
