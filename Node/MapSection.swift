@@ -13,8 +13,11 @@ class MapSection: SKNode {
     let height: CGFloat
     
     init(width: CGFloat, height: CGFloat) {
-        self.width = width
-        self.height = height
+        // To this:
+        let mapSize = CGSize(width: 1000, height: 1000) // New size: 1/4 of the original size
+        
+        self.width = mapSize.width
+        self.height = mapSize.height
         super.init()
         createObstaclesAndItems()
     }

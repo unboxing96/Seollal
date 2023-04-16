@@ -16,29 +16,25 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var items: [Item] = []
     private var lastUpdateTime: TimeInterval = 0
     
-    // map
     private var mapSections: [MapSection] = []
     private var worldNode: SKNode!
     
-    // map size
-    let mapScale: CGFloat = 0.05 // Change this value to reduce the size of the map
+    let mapScale: CGFloat = 0.25
 
-    // camera
     private var cameraNode: SKCameraNode = SKCameraNode()
 
-    // speed
-    private let playerSpeed: CGFloat = 200 // Adjust this value to control the player's speed
+    private let playerSpeed: CGFloat = 200
     
-    // count items
     private var collectedItems: Int = 0
-    private var itemStatusLabel: SKLabelNode!
+    
+    var itemStatusLabel: UILabel!
 
-    // bgImage
-    let backgroundImage = SKSpriteNode()
-
-
+    var backgroundImage: SKSpriteNode!
+    
+    var containerNode: SKNode!
     
     override func didMove(to view: SKView) {
+            
         setupWorldNode()
         setupPlayer()
         setupObstaclesAndItems()
@@ -46,10 +42,24 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         setupCameraConstraints()
         setupJoystick()
         setupMapEdge()
-        createBackgroundImage()
-        createItemStatusWindow()
         physicsWorld.contactDelegate = self
-        physicsWorld.gravity = CGVector(dx: 0, dy: -1) // Weaker gravity
+        physicsWorld.gravity = CGVector(dx: 0, dy: -1)
+        
+        let itemStatusLabel = UILabel(frame: CGRect(x: view.frame.width - 150, y: 20, width: 140, height: 40))
+        itemStatusLabel.textAlignment = .right
+        itemStatusLabel.textColor = .white
+        itemStatusLabel.font = UIFont(name: "HelveticaNeue-Bold", size: 24)
+        itemStatusLabel.text = "Items: \(collectedItems)/4"
+        view.addSubview(itemStatusLabel)
+        
+        self.itemStatusLabel = itemStatusLabel
+        
+        backgroundImage = SKSpriteNode(imageNamed: "backgroundImage")
+        backgroundImage.position = CGPoint(x: view.frame.minX , y: -view.frame.midY - 150)
+        backgroundImage.zPosition = -1000
+        backgroundImage.setScale(4)
+        backgroundImage.alpha = CGFloat(0.4)
+        cameraNode.addChild(backgroundImage)
     }
 
     func didBegin(_ contact: SKPhysicsContact) {
@@ -61,6 +71,26 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         } else if let playerNode = nodeB as? Player, let itemNode = nodeA as? Item {
             handleItemCollision(player: playerNode, item: itemNode)
         }
+    }
+    
+    override func update(_ currentTime: TimeInterval) {
+        cameraNode.position = player.position
+        
+        let dt = currentTime - lastUpdateTime
+        lastUpdateTime = currentTime
+        
+        let dx = joystick.velocity.x * playerSpeed * CGFloat(dt)
+        let dy = joystick.velocity.y * playerSpeed * CGFloat(dt)
+        
+        player.physicsBody?.applyForce(CGVector(dx: dx * 2.0, dy: dy * 2.0))
+        
+        let xMin = -size.width * 4 + player.size.width / 2
+        let xMax = size.width * 4 - player.size.width / 2
+        let yMin = -size.height * 4 + player.size.height / 2
+        let yMax = size.height * 4 - player.size.height / 2
+        
+        player.position.x = min(max(player.position.x, xMin), xMax)
+        player.position.y = min(max(player.position.y, yMin), yMax)
     }
 
     
@@ -82,7 +112,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             presentItemModal(for: item)
         }
     }
-
 
     private func handleMapEdgeCollision(player: Player) {
         let bounceVector = CGVector(dx: -(player.physicsBody?.velocity.dx ?? 0) * 0.2, dy: -(player.physicsBody?.velocity.dy ?? 0) * 0.2)
@@ -160,30 +189,30 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     private func setupMapEdge() {
         let leftEdge = SKNode()
-        leftEdge.physicsBody = SKPhysicsBody(edgeFrom: CGPoint(x: -size.width * mapScale, y: -size.height * mapScale), to: CGPoint(x: -size.width * mapScale, y: size.height * mapScale))
+        leftEdge.physicsBody = SKPhysicsBody(edgeFrom: CGPoint(x: -size.width * mapScale, y: -size.height * mapScale), to: CGPoint(x: -size.width  * mapScale, y: size.height * mapScale))
         leftEdge.physicsBody?.categoryBitMask = PhysicsCategory.mapEdge
         leftEdge.physicsBody?.collisionBitMask = PhysicsCategory.player
         worldNode.addChild(leftEdge)
 
         let topEdge = SKNode()
-        topEdge.physicsBody = SKPhysicsBody(edgeFrom: CGPoint(x: -size.width * mapScale, y: size.height * mapScale), to: CGPoint(x: size.width * mapScale, y: size.height * mapScale))
+        topEdge.physicsBody = SKPhysicsBody(edgeFrom: CGPoint(x: -size.width * mapScale, y: -size.height * mapScale), to: CGPoint(x: -size.width  * mapScale, y: size.height * mapScale))
         topEdge.physicsBody?.categoryBitMask = PhysicsCategory.mapEdge
         topEdge.physicsBody?.collisionBitMask = PhysicsCategory.player
         worldNode.addChild(topEdge)
 
+        // Add these lines to create edge physics bodies for the right and bottom sides of the map
         let rightEdge = SKNode()
-        rightEdge.physicsBody = SKPhysicsBody(edgeFrom: CGPoint(x: size.width * mapScale, y: size.height * mapScale), to: CGPoint(x: size.width * mapScale, y: -size.height * mapScale))
+        rightEdge.physicsBody = SKPhysicsBody(edgeFrom: CGPoint(x: -size.width * mapScale, y: -size.height * mapScale), to: CGPoint(x: -size.width  * mapScale, y: size.height * mapScale))
         rightEdge.physicsBody?.categoryBitMask = PhysicsCategory.mapEdge
         rightEdge.physicsBody?.collisionBitMask = PhysicsCategory.player
         worldNode.addChild(rightEdge)
 
         let bottomEdge = SKNode()
-        bottomEdge.physicsBody = SKPhysicsBody(edgeFrom: CGPoint(x: size.width * mapScale, y: -size.height * mapScale), to: CGPoint(x: -size.width * mapScale, y: -size.height * mapScale))
+        bottomEdge.physicsBody = SKPhysicsBody(edgeFrom: CGPoint(x: -size.width * mapScale, y: -size.height * mapScale), to: CGPoint(x: -size.width  * mapScale, y: size.height * mapScale))
         bottomEdge.physicsBody?.categoryBitMask = PhysicsCategory.mapEdge
         bottomEdge.physicsBody?.collisionBitMask = PhysicsCategory.player
         worldNode.addChild(bottomEdge)
     }
-
 
 
 
@@ -196,34 +225,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         return true
     }
 
-    
-    override func update(_ currentTime: TimeInterval) {
-        // camera
-        cameraNode.position = player.position
-        
-        let dt = currentTime - lastUpdateTime
-        lastUpdateTime = currentTime
-        
-        let dx = joystick.velocity.x * playerSpeed * CGFloat(dt)
-        let dy = joystick.velocity.y * playerSpeed * CGFloat(dt)
-        
-        // Update itemStatusLabel position
-        itemStatusLabel.position = CGPoint(x: cameraNode.position.x + size.width / 2 - itemStatusLabel.frame.width / 2 - 10, y: cameraNode.position.y + size.height / 2 - itemStatusLabel.frame.height / 2 - 10)
 
-        backgroundImage.position = CGPoint(x: cameraNode.position.x, y: cameraNode.position.y)
-        
-        // Apply a stronger force to the player's physics body based on joystick input
-        player.physicsBody?.applyForce(CGVector(dx: dx * 2.0, dy: dy * 2.0))
-        
-        // Ensure the player doesn't move beyond the map boundaries
-        let xMin = -size.width * 4 + player.size.width / 2
-        let xMax = size.width * 4 - player.size.width / 2
-        let yMin = -size.height * 4 + player.size.height / 2
-        let yMax = size.height * 4 - player.size.height / 2
-        
-        player.position.x = min(max(player.position.x, xMin), xMax)
-        player.position.y = min(max(player.position.y, yMin), yMax)
-    }
     
 //        // Ensure the player doesn't move beyond the map boundaries
 //        player.position.x = min(max(player.position.x, -size.width * 4), size.width * 4)
@@ -238,9 +240,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     
+    // Update the presentItemModal function to include the completionHandler
     private func presentItemModal(for item: Item, completionHandler: (() -> Void)? = nil) {
         guard let view = self.view else { return }
-        
+            
         let hostingController = UIHostingController(rootView: AnyView(EmptyView().background(Color.clear)))
 
         hostingController.rootView = AnyView(ItemModalView(item: item, onDismiss: {
@@ -248,36 +251,40 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             self.joystick.velocity = .zero // Add this line to reset the joystick's velocity
             self.lastUpdateTime = TimeInterval(Date().timeIntervalSinceReferenceDate)
             hostingController.dismiss(animated: true)
+            completionHandler?() // Add this line to call the completionHandler after dismissing the modal
         }))
 
         hostingController.modalPresentationStyle = .overFullScreen
         hostingController.modalTransitionStyle = .crossDissolve
-        
+            
         view.isPaused = true
         view.window?.rootViewController?.present(hostingController, animated: true)
     }
 
     
-    private func createBackgroundImage() {
-        let backgroundImage = SKSpriteNode(imageNamed: "backgroundImage")
-        backgroundImage.position = CGPoint(x: size.width / 2, y: size.height / 4)
-        backgroundImage.zPosition = -2
-        backgroundImage.alpha = 0.5
-        addChild(backgroundImage)
-    }
+//    private func createBackgroundImage() {
+//        let backgroundImage = SKSpriteNode(imageNamed: "backgroundImage")
+//        backgroundImage.position = CGPoint(x: size.width / 2, y: size.height / 4)
+//        backgroundImage.zPosition = -2
+//        backgroundImage.alpha = 0.5
+//        addChild(backgroundImage)
+//    }
     
-    private func createItemStatusWindow() {
-        itemStatusLabel = SKLabelNode(fontNamed: "Arial")
-        itemStatusLabel.text = "Items: \(collectedItems)/4"
-        itemStatusLabel.fontSize = 20
-        itemStatusLabel.fontColor = .white
-        itemStatusLabel.horizontalAlignmentMode = .right
-        itemStatusLabel.position = CGPoint(x: size.width / 2 - itemStatusLabel.frame.width / 2 - 10, y: size.height / 2 - itemStatusLabel.frame.height / 2 - 10)
-        cameraNode.addChild(itemStatusLabel) // Add the itemStatusLabel to the cameraNode
-    }
+//    private func createItemStatusWindow() {
+//        itemStatusLabel = SKLabelNode(fontNamed: "Arial")
+//        itemStatusLabel.text = "Items: \(collectedItems)/4"
+//        itemStatusLabel.fontSize = 20
+//        itemStatusLabel.fontColor = .white
+//        itemStatusLabel.horizontalAlignmentMode = .right
+//        itemStatusLabel.position = CGPoint(x: size.width / 2 - itemStatusLabel.frame.width / 2 - 10, y: size.height / 2 - itemStatusLabel.frame.height / 2 - 10)
+//        cameraNode.addChild(itemStatusLabel) // Add the itemStatusLabel to the cameraNode
+//    }
     
     private func showGameEndView() {
         resetGame()
+        
+        // Add this code before transitioning to another scene or in your game over function
+        itemStatusLabel.removeFromSuperview()
 
         guard let view = self.view else { return }
         
@@ -294,8 +301,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     
     private func resetGame() {
-        collectedItems = 0
         updateItemStatusLabel()
+        collectedItems = 0
         player.position = CGPoint(x: size.width / 2, y: size.height / 2)
 
         for item in items {
