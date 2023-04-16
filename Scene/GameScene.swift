@@ -15,23 +15,17 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var obstacles: [Obstacle] = []
     private var items: [Item] = []
     private var lastUpdateTime: TimeInterval = 0
-    
     private var mapSections: [MapSection] = []
     private var worldNode: SKNode!
-    
-    let mapScale: CGFloat = 0.25
-
+    let mapScale: CGFloat = 0.05
     private var cameraNode: SKCameraNode = SKCameraNode()
-
     private let playerSpeed: CGFloat = 200
-    
     private var collectedItems: Int = 0
-    
     var itemStatusLabel: UILabel!
-
     var backgroundImage: SKSpriteNode!
-    
     var containerNode: SKNode!
+    let safeZoneRadius: CGFloat = 200
+
     
     override func didMove(to view: SKView) {
             
@@ -75,20 +69,20 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     override func update(_ currentTime: TimeInterval) {
         cameraNode.position = player.position
-        
+
         let dt = currentTime - lastUpdateTime
         lastUpdateTime = currentTime
-        
+
         let dx = joystick.velocity.x * playerSpeed * CGFloat(dt)
         let dy = joystick.velocity.y * playerSpeed * CGFloat(dt)
-        
+
         player.physicsBody?.applyForce(CGVector(dx: dx * 2.0, dy: dy * 2.0))
-        
-        let xMin = -size.width * 4 + player.size.width / 2
-        let xMax = size.width * 4 - player.size.width / 2
-        let yMin = -size.height * 4 + player.size.height / 2
-        let yMax = size.height * 4 - player.size.height / 2
-        
+
+        let xMin = -size.width * 2 + player.size.width / 2
+        let xMax = size.width * 2 - player.size.width / 2
+        let yMin = -size.height * 2 + player.size.height / 2
+        let yMax = size.height * 2 - player.size.height / 2
+
         player.position.x = min(max(player.position.x, xMin), xMax)
         player.position.y = min(max(player.position.y, yMin), yMax)
     }
@@ -143,35 +137,52 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     private func setupObstaclesAndItems() {
-        let numberOfClouds = 50 // Adjust this value as needed
-        let numberOfObstacles = 40 // Adjust this value as needed
-        let numberOfItems = 4 // Adjust this value as needed
+            let numberOfClouds = 50 // Adjust this value as needed
+            let numberOfObstacles = 40 // Adjust this value as needed
+            let numberOfItems = 4 // Adjust this value as needed
+        
+            let edgeSize = CGSize(width: size.width * 2, height: size.height * 2)
 
-        // Add this code to create the items and place them outside of obstacles
-        let items: [Item] = [Item1(), Item2(), Item3(), Item4()]
-        for item in items {
-            var position: CGPoint
-            repeat {
-                position = CGPoint(x: CGFloat.random(in: -size.width * 4...size.width * 4), y: CGFloat.random(in: -size.height * 4...size.height * 4))
-                item.position = position
-            } while !isPositionOutsideObstacles(position: position)
-            worldNode.addChild(item)
+            // Add this code to create the items and place them outside of obstacles
+            let items: [Item] = [Item1(), Item2(), Item3(), Item4()]
+            for item in items {
+                var position: CGPoint
+                repeat {
+                    position = CGPoint(x: CGFloat.random(in: -edgeSize.width...edgeSize.width), y: CGFloat.random(in: -edgeSize.height...edgeSize.height))
+                    item.position = position
+                } while !isPositionOutsideObstacles(position: position)
+                worldNode.addChild(item)
+            }
+
+            for _ in 0..<numberOfClouds {
+                let cloud = Cloud()
+                cloud.position = CGPoint(x: CGFloat.random(in: -edgeSize.width...edgeSize.width), y: CGFloat.random(in: -edgeSize.height...edgeSize.height))
+                cloud.zPosition = -1
+                cloud.setScale(CGFloat.random(in: 0.5...1.5))
+                cloud.alpha = CGFloat.random(in: 0.3...1.0)
+                worldNode.addChild(cloud)
+            }
+
+            for _ in 0..<numberOfObstacles {
+                let obstacle = Obstacle()
+                obstacle.position = CGPoint(x: CGFloat.random(in: -edgeSize.width...edgeSize.width), y: CGFloat.random(in: -edgeSize.height...edgeSize.height))
+                worldNode.addChild(obstacle)
+            }
         }
 
-        for _ in 0..<numberOfClouds {
-            let cloud = Cloud()
-            cloud.position = CGPoint(x: CGFloat.random(in: -size.width * 4...size.width * 4), y: CGFloat.random(in: -size.height * 4...size.height * 4))
-            cloud.zPosition = -1
-            cloud.setScale(CGFloat.random(in: 0.5...1.5))
-            cloud.alpha = CGFloat.random(in: 0.3...1.0)
-            worldNode.addChild(cloud)
-        }
 
-        for _ in 0..<numberOfObstacles {
-            let obstacle = Obstacle()
-            obstacle.position = CGPoint(x: CGFloat.random(in: -size.width * 4...size.width * 4), y: CGFloat.random(in: -size.height * 4...size.height * 4))
-            worldNode.addChild(obstacle)
+    private func isPositionOutsideObstacles(position: CGPoint) -> Bool {
+        for obstacle in obstacles {
+            if obstacle.contains(position) {
+                return false
+            }
         }
+        return true
+    }
+
+    private func isPositionInSafeZone(position: CGPoint) -> Bool {
+        let distanceToPlayer = sqrt(pow(position.x - player.position.x, 2) + pow(position.y - player.position.y, 2))
+        return distanceToPlayer <= safeZoneRadius
     }
 
     
@@ -188,41 +199,31 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
 
     private func setupMapEdge() {
+        let edgeSize = CGSize(width: size.width * mapScale * 2, height: size.height * mapScale * 2)
+
         let leftEdge = SKNode()
-        leftEdge.physicsBody = SKPhysicsBody(edgeFrom: CGPoint(x: -size.width * mapScale, y: -size.height * mapScale), to: CGPoint(x: -size.width  * mapScale, y: size.height * mapScale))
+        leftEdge.physicsBody = SKPhysicsBody(edgeFrom: CGPoint(x: -edgeSize.width, y: -edgeSize.height), to: CGPoint(x: -edgeSize.width, y: edgeSize.height))
         leftEdge.physicsBody?.categoryBitMask = PhysicsCategory.mapEdge
         leftEdge.physicsBody?.collisionBitMask = PhysicsCategory.player
         worldNode.addChild(leftEdge)
 
         let topEdge = SKNode()
-        topEdge.physicsBody = SKPhysicsBody(edgeFrom: CGPoint(x: -size.width * mapScale, y: -size.height * mapScale), to: CGPoint(x: -size.width  * mapScale, y: size.height * mapScale))
+        topEdge.physicsBody = SKPhysicsBody(edgeFrom: CGPoint(x: -edgeSize.width, y: edgeSize.height), to: CGPoint(x: edgeSize.width, y: edgeSize.height))
         topEdge.physicsBody?.categoryBitMask = PhysicsCategory.mapEdge
         topEdge.physicsBody?.collisionBitMask = PhysicsCategory.player
         worldNode.addChild(topEdge)
 
-        // Add these lines to create edge physics bodies for the right and bottom sides of the map
         let rightEdge = SKNode()
-        rightEdge.physicsBody = SKPhysicsBody(edgeFrom: CGPoint(x: -size.width * mapScale, y: -size.height * mapScale), to: CGPoint(x: -size.width  * mapScale, y: size.height * mapScale))
+        rightEdge.physicsBody = SKPhysicsBody(edgeFrom: CGPoint(x: edgeSize.width, y: -edgeSize.height), to: CGPoint(x: edgeSize.width, y: edgeSize.height))
         rightEdge.physicsBody?.categoryBitMask = PhysicsCategory.mapEdge
         rightEdge.physicsBody?.collisionBitMask = PhysicsCategory.player
         worldNode.addChild(rightEdge)
 
         let bottomEdge = SKNode()
-        bottomEdge.physicsBody = SKPhysicsBody(edgeFrom: CGPoint(x: -size.width * mapScale, y: -size.height * mapScale), to: CGPoint(x: -size.width  * mapScale, y: size.height * mapScale))
+        bottomEdge.physicsBody = SKPhysicsBody(edgeFrom: CGPoint(x: -edgeSize.width, y: -edgeSize.height), to: CGPoint(x: edgeSize.width, y: -edgeSize.height))
         bottomEdge.physicsBody?.categoryBitMask = PhysicsCategory.mapEdge
         bottomEdge.physicsBody?.collisionBitMask = PhysicsCategory.player
         worldNode.addChild(bottomEdge)
-    }
-
-
-
-    private func isPositionOutsideObstacles(position: CGPoint) -> Bool {
-        for obstacle in obstacles {
-            if obstacle.contains(position) {
-                return false
-            }
-        }
-        return true
     }
 
 
@@ -231,14 +232,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 //        player.position.x = min(max(player.position.x, -size.width * 4), size.width * 4)
 //        player.position.y = min(max(player.position.y, -size.height * 4), size.height * 4)
         
-
     private func setupCameraConstraints() {
-        let xRange = SKRange(lowerLimit: -size.width * 4 + size.width / 2, upperLimit: size.width * 4 - size.width / 2)
-        let yRange = SKRange(lowerLimit: -size.height * 4 + size.height / 2, upperLimit: size.height * 4 - size.height / 2)
+        let xRange = SKRange(lowerLimit: -size.width * 2 + size.width / 2, upperLimit: size.width * 2 - size.width / 2)
+        let yRange = SKRange(lowerLimit: -size.height * 2 + size.height / 2, upperLimit: size.height * 2 - size.height / 2)
         let constraint = SKConstraint.positionX(xRange, y: yRange)
         cameraNode.constraints = [constraint]
     }
-
     
     // Update the presentItemModal function to include the completionHandler
     private func presentItemModal(for item: Item, completionHandler: (() -> Void)? = nil) {
@@ -261,25 +260,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         view.window?.rootViewController?.present(hostingController, animated: true)
     }
 
-    
-//    private func createBackgroundImage() {
-//        let backgroundImage = SKSpriteNode(imageNamed: "backgroundImage")
-//        backgroundImage.position = CGPoint(x: size.width / 2, y: size.height / 4)
-//        backgroundImage.zPosition = -2
-//        backgroundImage.alpha = 0.5
-//        addChild(backgroundImage)
-//    }
-    
-//    private func createItemStatusWindow() {
-//        itemStatusLabel = SKLabelNode(fontNamed: "Arial")
-//        itemStatusLabel.text = "Items: \(collectedItems)/4"
-//        itemStatusLabel.fontSize = 20
-//        itemStatusLabel.fontColor = .white
-//        itemStatusLabel.horizontalAlignmentMode = .right
-//        itemStatusLabel.position = CGPoint(x: size.width / 2 - itemStatusLabel.frame.width / 2 - 10, y: size.height / 2 - itemStatusLabel.frame.height / 2 - 10)
-//        cameraNode.addChild(itemStatusLabel) // Add the itemStatusLabel to the cameraNode
-//    }
-    
     private func showGameEndView() {
         resetGame()
         
@@ -311,9 +291,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             }
         }
     }
-
-
-
+    
     private func updateItemStatusLabel() {
         itemStatusLabel.text = "Items: \(collectedItems)/4"
     }
