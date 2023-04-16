@@ -20,7 +20,7 @@ struct ItemModalView: View {
                 .frame(height: 200)
             
             // Bottom half: Short explanation about it
-            Text(item.description)
+            Text("description")
                 .font(.title2)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)

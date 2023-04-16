@@ -17,6 +17,7 @@ let package = Package(
             name: "SeollalGame",
             targets: ["AppModule"],
             bundleIdentifier: "swift.SeollalGame",
+            teamIdentifier: "8H4K6TKQBU",
             displayVersion: "1.0",
             bundleVersion: "1",
             appIcon: .placeholder(icon: .gamepad),

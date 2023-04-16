@@ -7,7 +7,7 @@ class Item: SKSpriteNode {
     
     init(imageNamed: String) {
         let texture = SKTexture(imageNamed: imageNamed)
-        let itemSize = CGSize(width: 50, height: 50) // Set the size for all items here
+        let itemSize = CGSize(width: 250, height: 250) // Set the size for all items here
         super.init(texture: texture, color: .clear, size: itemSize)
     }
     
@@ -19,6 +19,12 @@ class Item: SKSpriteNode {
 class Item1: Item {
     init() {
         super.init(imageNamed: "item1_image")
+        physicsBody = SKPhysicsBody(circleOfRadius: size.width / 2)
+        physicsBody?.categoryBitMask = PhysicsCategory.item
+        physicsBody?.collisionBitMask = PhysicsCategory.player
+        physicsBody?.contactTestBitMask = PhysicsCategory.player
+        physicsBody?.isDynamic = false
+
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -29,6 +35,12 @@ class Item1: Item {
 class Item2: Item {
     init() {
         super.init(imageNamed: "item2_image")
+        physicsBody = SKPhysicsBody(circleOfRadius: size.width / 2)
+        physicsBody?.categoryBitMask = PhysicsCategory.item
+        physicsBody?.collisionBitMask = PhysicsCategory.player
+        physicsBody?.contactTestBitMask = PhysicsCategory.player
+        physicsBody?.isDynamic = false
+
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -39,6 +51,12 @@ class Item2: Item {
 class Item3: Item {
     init() {
         super.init(imageNamed: "item3_image")
+        physicsBody = SKPhysicsBody(circleOfRadius: size.width / 2)
+        physicsBody?.categoryBitMask = PhysicsCategory.item
+        physicsBody?.collisionBitMask = PhysicsCategory.player
+        physicsBody?.contactTestBitMask = PhysicsCategory.player
+        physicsBody?.isDynamic = false
+
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -49,6 +67,12 @@ class Item3: Item {
 class Item4: Item {
     init() {
         super.init(imageNamed: "item4_image")
+        physicsBody = SKPhysicsBody(circleOfRadius: size.width / 2)
+        physicsBody?.categoryBitMask = PhysicsCategory.item
+        physicsBody?.collisionBitMask = PhysicsCategory.player
+        physicsBody?.contactTestBitMask = PhysicsCategory.player
+        physicsBody?.isDynamic = false
+
     }
     
     required init?(coder aDecoder: NSCoder) {
