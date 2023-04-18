@@ -1,40 +1,39 @@
-//
-//  SwiftUIView.swift
-//  
-//
-//  Created by kimpepe on 2023/04/14.
-//
 
 import SwiftUI
 
 struct ItemModalView: View {
     let item: Item
+    let image: UIImage
     let onDismiss: () -> Void
     
     var body: some View {
         VStack(spacing: 20) {
-            // Top half: Image (short animation image)
-            Image(uiImage: item.image)
+            Text(item.itemName)
+                .font(.title)
+                .padding()
+                .frame(height: 100)
+            
+            Image(uiImage: image)
                 .resizable()
                 .scaledToFit()
-                .frame(height: 200)
+                .frame(width: 500, height: 400)
             
-            // Bottom half: Short explanation about it
-            Text("description")
+            Text(item.itemDescription)
                 .font(.title2)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
+                .frame(height: 200)
             
-            // Bottom: Dismiss button
             Button("Dismiss", action: onDismiss)
                 .padding()
                 .background(Color.blue)
                 .foregroundColor(.white)
                 .cornerRadius(10)
+                .frame(height: 100)
         }
-        .padding()
         .background(Color.white)
         .cornerRadius(20)
         .shadow(radius: 10)
+        .frame(width: 600, height: 900)
     }
 }

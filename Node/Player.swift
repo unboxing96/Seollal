@@ -26,8 +26,8 @@ class Player: SKSpriteNode {
         physicsBody?.categoryBitMask = 1
         physicsBody?.contactTestBitMask = PhysicsCategory.obstacle | PhysicsCategory.mapEdge
         physicsBody?.collisionBitMask = PhysicsCategory.obstacle | PhysicsCategory.mapEdge
-        physicsBody?.restitution = 1.0
-        physicsBody?.restitution = 0.5 // Add this line to make the player bounce off edges
+        physicsBody?.restitution = 0.5
         physicsBody?.linearDamping = 2.0 // Add this line to control the player's speed
+        physicsBody?.allowsRotation = true
     }
 }
