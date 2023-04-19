@@ -17,6 +17,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private let playerSpeed: CGFloat = 200
     private var collectedItems: Int = 0
     var itemStatusLabel: UILabel!
+    var backgroundSky: SKSpriteNode!
     var backgroundImage: SKSpriteNode!
     var containerNode: SKNode!
     let safeZoneRadius: CGFloat = 200
@@ -46,12 +47,19 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         self.itemStatusLabel = itemStatusLabel
         
-        backgroundImage = SKSpriteNode(imageNamed: "backgroundImage")
+        backgroundSky = SKSpriteNode(imageNamed: "start_night")
+        backgroundSky.alpha = CGFloat(1)
+        backgroundSky.zPosition = -2000
+        cameraNode.addChild(backgroundSky)
+        
+        backgroundImage = SKSpriteNode(imageNamed: "start_moon")
         backgroundImage.position = CGPoint(x: view.frame.minX , y: -view.frame.midY - 150)
         backgroundImage.zPosition = -1000
-        backgroundImage.setScale(4)
-        backgroundImage.alpha = CGFloat(0.4)
+        backgroundImage.alpha = CGFloat(0.7)
         cameraNode.addChild(backgroundImage)
+
+        let messagePosition = CGPoint(x: size.width / 2, y: size.height / 2)
+        showMessage(at: messagePosition)
     }
 
     func didBegin(_ contact: SKPhysicsContact) {
@@ -92,7 +100,20 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             miniPlayer.position = CGPoint(x: player.position.x * scaleFactor, y: player.position.y * scaleFactor)
         }
     }
+    
+    func showMessage(at position: CGPoint) {
+        let label = SKSpriteNode(imageNamed: "game_caution")
+        cameraNode.addChild(label)
 
+        // Animations
+        let fadeInAction = SKAction.fadeIn(withDuration: 1)
+        let waitAction = SKAction.wait(forDuration: 2.5)
+        let fadeOutAction = SKAction.fadeOut(withDuration: 0.5)
+        let removeAction = SKAction.removeFromParent()
+        let sequence = SKAction.sequence([fadeInAction, waitAction, fadeOutAction, removeAction])
+
+        label.run(sequence)
+    }
 
     
     private func handleCollision(player: SKSpriteNode, obstacle: Obstacle) {
@@ -136,7 +157,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private func setupJoystick() {
         joystick = Joystick()
         
-        let joystickPadding: CGFloat = 50
+        let joystickPadding: CGFloat = 100
         let joystickPosition = CGPoint(x: -size.width / 2 + joystickPadding + joystick.radius, y: -size.height / 2 + joystickPadding + joystick.radius)
         joystick.position = joystickPosition
         
@@ -325,7 +346,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
 
     private func showGameEndView() {
-        resetGame()
+//        resetGame()
         
         // Add this code before transitioning to another scene or in your game over function
         itemStatusLabel.removeFromSuperview()

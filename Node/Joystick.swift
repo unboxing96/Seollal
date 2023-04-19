@@ -26,11 +26,17 @@ class Joystick: SKNode {
     }
     
     private func setupControlNode() {
+        // Add background image
+        let backgroundImage = SKSpriteNode(imageNamed: "joystick")
+        backgroundImage.size = CGSize(width: radius * 4, height: radius * 4)
+        addChild(backgroundImage)
+        
         controlNode = SKShapeNode(circleOfRadius: 30)
-        controlNode.fillColor = .red
+        controlNode.fillColor = .gray
         controlNode.strokeColor = .clear
         addChild(controlNode)
     }
+
     
     func joystickTouchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         if let touch = touches.first {
