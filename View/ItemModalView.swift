@@ -13,13 +13,11 @@ struct ItemModalView: View {
                 .font(.largeTitle)
                 .fontWeight(.black)
                 .frame(height: 100)
-                .background(.orange)
             
             Image(uiImage: image)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 500, height: 400)
-                .background(.green)
             
             Text(item.itemDescription)
                 .font(.title)
@@ -27,7 +25,6 @@ struct ItemModalView: View {
                 .padding(.horizontal)
                 .frame(height: 200)
                 .multilineTextAlignment(.leading) // Align text to the leading edge (left for left-to-right languages)
-                .background(.gray)
             
             Button("Dismiss", action: onDismiss)
                 .padding()
