@@ -39,7 +39,7 @@ struct GameEndView: View {
                     
                     Image("end_title1")
                         .scaleEffect(0.9)
-                        .offset(y: -520)
+                        .offset(y: -450)
                 }
                 .frame(maxHeight: .infinity)
                 .onAppear {
