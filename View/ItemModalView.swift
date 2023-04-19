@@ -5,35 +5,40 @@ struct ItemModalView: View {
     let item: Item
     let image: UIImage
     let onDismiss: () -> Void
+
     
     var body: some View {
         VStack(spacing: 20) {
             Text(item.itemName)
-                .font(.title)
-                .padding()
+                .font(.largeTitle)
+                .fontWeight(.black)
                 .frame(height: 100)
+                .background(.orange)
             
             Image(uiImage: image)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 500, height: 400)
+                .background(.green)
             
             Text(item.itemDescription)
-                .font(.title2)
+                .font(.title)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
                 .frame(height: 200)
+                .multilineTextAlignment(.leading) // Align text to the leading edge (left for left-to-right languages)
+                .background(.gray)
             
             Button("Dismiss", action: onDismiss)
                 .padding()
-                .background(Color.blue)
-                .foregroundColor(.white)
+                .background(Color.yellow)
+                .foregroundColor(.black)
                 .cornerRadius(10)
                 .frame(height: 100)
         }
         .background(Color.white)
         .cornerRadius(20)
         .shadow(radius: 10)
-        .frame(width: 600, height: 900)
+        .frame(width: 750, height: 1000)
     }
 }

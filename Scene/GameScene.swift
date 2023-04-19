@@ -3,6 +3,8 @@
 import Foundation
 import SpriteKit
 import SwiftUI
+import CoreGraphics
+
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
     private var player = Player()
@@ -103,6 +105,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     func showMessage(at position: CGPoint) {
         let label = SKSpriteNode(imageNamed: "game_caution")
+        label.setScale(0.9)
         cameraNode.addChild(label)
 
         // Animations
@@ -169,6 +172,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let numberOfObstacles = 20 // Adjust this value as needed
 
         let edgeSize = CGSize(width: size.width * 2, height: size.height * 2)
+        let playerPosition = CGPoint(x: size.width / 2, y: size.height / 2)
+        let safeDistance: CGFloat = 100 // Adjust this value based on your desired minimum distance from the player
+
+        func isPositionSafe(position: CGPoint) -> Bool {
+            return position.distance(to: playerPosition) >= safeDistance
+        }
 
         // Add this code to create the items and place them outside of obstacles
         let itemArray: [Item] = [Item1(), Item2(), Item3(), Item4()]
@@ -176,8 +185,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             var position: CGPoint
             repeat {
                 position = CGPoint(x: CGFloat.random(in: -edgeSize.width...edgeSize.width), y: CGFloat.random(in: -edgeSize.height...edgeSize.height))
-                item.position = position
-            } while !isPositionOutsideObstacles(position: position)
+            } while !isPositionOutsideObstacles(position: position) || !isPositionSafe(position: position)
+            item.position = position
             worldNode.addChild(item)
             items.append(item) // Add this line to store the item in the items array
         }
@@ -192,12 +201,17 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
 
         for _ in 0..<numberOfObstacles {
+            var position: CGPoint
+            repeat {
+                position = CGPoint(x: CGFloat.random(in: -edgeSize.width...edgeSize.width), y: CGFloat.random(in: -edgeSize.height...edgeSize.height))
+            } while !isPositionSafe(position: position)
             let obstacle = Obstacle()
-            obstacle.position = CGPoint(x: CGFloat.random(in: -edgeSize.width...edgeSize.width), y: CGFloat.random(in: -edgeSize.height...edgeSize.height))
+            obstacle.position = position
             worldNode.addChild(obstacle)
             obstacles.append(obstacle) // Add this line to store the obstacle in the obstacles array
         }
     }
+
 
 
     private func isPositionOutsideObstacles(position: CGPoint) -> Bool {
@@ -400,4 +414,12 @@ struct PhysicsCategory {
     static let obstacle: UInt32 = 0x1 << 1
     static let item: UInt32 = 0x1 << 3
     static let mapEdge: UInt32 = 0x1 << 4 // Add this line for a separate category for map edges
+}
+
+extension CGPoint {
+    func distance(to point: CGPoint) -> CGFloat {
+        let xDistance = self.x - point.x
+        let yDistance = self.y - point.y
+        return sqrt(xDistance * xDistance + yDistance * yDistance)
+    }
 }
